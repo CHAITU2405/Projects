@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="card">
+            <div class="card-body p-5">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-graduation-cap text-primary me-3"></i>
+                    Welcome to Online Exam System
+                </h1>
+                <p class="lead mb-5">
+                    Choose your domain and start your examination journey. 
+                    Our system provides a secure and efficient way to conduct online assessments.
+                </p>
+                
+                {% if not current_user.is_authenticated %}
+                    <div class="mb-4">
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('start_exam', domain='web_dev') if current_user.is_authenticated and current_user.role == 'student' else url_for('admin_questions', domain='web_dev') if current_user.is_authenticated and current_user.role == 'admin' else url_for('login') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-code fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Web Development</h3>
+                <p class="card-text">
+                    Test your knowledge in HTML, CSS, JavaScript, and modern web technologies.
+                </p>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'student' %}
+                        <span class="badge bg-success">Start Exam</span>
+                    {% else %}
+                        <span class="badge bg-info">Manage Questions</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-secondary">Login Required</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('start_exam', domain='ml') if current_user.is_authenticated and current_user.role == 'student' else url_for('admin_questions', domain='ml') if current_user.is_authenticated and current_user.role == 'admin' else url_for('login') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Machine Learning</h3>
+                <p class="card-text">
+                    Evaluate your understanding of algorithms, statistics, and ML frameworks.
+                </p>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'student' %}
+                        <span class="badge bg-success">Start Exam</span>
+                    {% else %}
+                        <span class="badge bg-info">Manage Questions</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-secondary">Login Required</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('start_exam', domain='data_science') if current_user.is_authenticated and current_user.role == 'student' else url_for('admin_questions', domain='data_science') if current_user.is_authenticated and current_user.role == 'admin' else url_for('login') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Data Science</h3>
+                <p class="card-text">
+                    Assess your skills in data analysis, visualization, and statistical methods.
+                </p>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'student' %}
+                        <span class="badge bg-success">Start Exam</span>
+                    {% else %}
+                        <span class="badge bg-info">Manage Questions</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-secondary">Login Required</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>System Features
+                </h4>
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h6>30-Minute Timer</h6>
+                        <small class="text-muted">Automatic submission</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                        <h6>Secure Environment</h6>
+                        <small class="text-muted">Tab switching prevention</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-database fa-2x text-info mb-2"></i>
+                        <h6>SQLite Storage</h6>
+                        <small class="text-muted">Reliable data persistence</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                        <h6>Role Management</h6>
+                        <small class="text-muted">Admin & Student access</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

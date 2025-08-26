@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Admins - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    <i class="fas fa-user-shield me-2"></i>Manage Admins
+                </h2>
+                <form method="POST" class="row g-3">
+                    <input type="hidden" name="action" value="add">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" class="form-control" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="domains" multiple required>
+                            <option value="all">All Domains</option>
+                            <option value="web_dev">Web Dev</option>
+                            <option value="ml">Machine Learning</option>
+                            <option value="data_science">Data Science</option>
+                        </select>
+                        <small class="text-muted">Ctrl+Click to select multiple</small>
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="fas fa-users-cog me-2"></i>Current Admins
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Domain</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for admin in admins %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ admin.username }}</td>
+                                <td>{{ admin.email }}</td>
+                                <td>
+                                    {% if admin.domain == 'all' %}
+                                        all
+                                    {% elif admin.domain is string %}
+                                        {{ admin.domain }}
+                                    {% else %}
+                                        {{ admin.domain | join(', ') }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ admin.created_at[:19].replace('T', ' ') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-username="{{ admin.username }}" data-email="{{ admin.email }}" data-domain="{{ admin.domain }}">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="action" value="remove">
+                                        <input type="hidden" name="username" value="{{ admin.username }}">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this admin?');">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Modal -->
+<div class="modal fade" id="editAdminModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Domain Admin</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST">
+        <div class="modal-body">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="original_username" id="editOriginalUsername">
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="editUsername" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" id="editEmail" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Domains</label>
+                <select class="form-select" name="domains" id="editDomains" multiple required>
+                    <option value="all">All Domains</option>
+                    <option value="web_dev">Web Dev</option>
+                    <option value="ml">Machine Learning</option>
+                    <option value="data_science">Data Science</option>
+                </select>
+                <small class="text-muted">Ctrl+Click to select multiple</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password (leave blank to keep)</label>
+                <input type="text" class="form-control" name="password" placeholder="••••••">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+var editModal = document.getElementById('editAdminModal');
+editModal.addEventListener('show.bs.modal', function (event) {
+  var button = event.relatedTarget;
+  var username = button.getAttribute('data-username');
+  var email = button.getAttribute('data-email');
+  var domain = button.getAttribute('data-domain');
+  document.getElementById('editOriginalUsername').value = username;
+  document.getElementById('editUsername').value = username;
+  document.getElementById('editEmail').value = email;
+  // preselect domains
+  var select = document.getElementById('editDomains');
+  var domains = [];
+  try {
+    if (domain === 'all') domains = ['all'];
+    else if (domain && typeof domain === 'string') domains = [domain];
+    else domains = (domain || []);
+  } catch (e) { domains = []; }
+  for (var i = 0; i < select.options.length; i++) {
+    select.options[i].selected = domains.includes(select.options[i].value);
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}

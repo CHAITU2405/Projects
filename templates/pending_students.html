@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Student Approvals{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<h2 class="card-title mb-3"><i class="fas fa-user-check me-2"></i>Pending Students</h2>
+				{% if pending %}
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead class="table-light">
+							<tr>
+								<th>Username</th>
+								<th>Email</th>
+								<th>Domain</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for u in pending %}
+							<tr>
+								<td>{{ u.username }}</td>
+								<td>{{ u.email }}</td>
+								<td>{{ (u.domain or 'N/A').replace('_',' ').title() }}</td>
+								<td>
+									<form method="POST" class="d-inline">
+										<input type="hidden" name="user_id" value="{{ u.id }}" />
+										<button class="btn btn-sm btn-success" name="action" value="approve">
+											<i class="fas fa-check me-1"></i>Approve
+										</button>
+									</form>
+									<form method="POST" class="d-inline" onsubmit="return confirm('Reject and delete this student?')">
+										<input type="hidden" name="user_id" value="{{ u.id }}" />
+										<button class="btn btn-sm btn-danger" name="action" value="reject">
+											<i class="fas fa-times me-1"></i>Reject
+										</button>
+									</form>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<div class="text-center py-5">
+					<i class="fas fa-user-check fa-3x text-muted mb-3"></i>
+					<h5 class="text-muted">No pending students.</h5>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Results - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>Exam Results Overview
+                </h2>
+                <p class="text-muted">Monitor student performance across all domains</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Statistics Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ exam_sessions|length }}</h4>
+                <small class="text-muted">Total Exams Taken</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user-graduate fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ unique_students_count }}</h4>
+                <small class="text-muted">Unique Students</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-code fa-2x text-info mb-2"></i>
+                <h4 class="text-info">{{ exam_sessions|selectattr('domain', 'equalto', 'web_dev')|list|length }}</h4>
+                <small class="text-muted">Web Dev Exams</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-brain fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">{{ exam_sessions|selectattr('domain', 'equalto', 'ml')|list|length }}</h4>
+                <small class="text-muted">ML Exams</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    {% if show_domain_performance %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-pie me-2"></i>Performance by Domain
+                </h5>
+                <div class="mt-3">
+                    {% set web_dev_exams = exam_sessions|selectattr('domain', 'equalto', 'web_dev')|list %}
+                    {% set ml_exams = exam_sessions|selectattr('domain', 'equalto', 'ml')|list %}
+                    {% set ds_exams = exam_sessions|selectattr('domain', 'equalto', 'data_science')|list %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Web Development</span>
+                            <span>{{ web_dev_exams|length }} exams</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-primary" style="width: {{ avg_percentages['web_dev'] }}%">
+                                {{ "%.1f"|format(avg_percentages['web_dev']) }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Machine Learning</span>
+                            <span>{{ ml_exams|length }} exams</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" style="width: {{ avg_percentages['ml'] }}%">
+                                {{ "%.1f"|format(avg_percentages['ml']) }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Data Science</span>
+                            <span>{{ ds_exams|length }} exams</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-info" style="width: {{ avg_percentages['data_science'] }}%">
+                                {{ "%.1f"|format(avg_percentages['data_science']) }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Score Distribution -->
+    <div class="col-md-6 mb-4 {% if not show_domain_performance %}col-md-12{% endif %}">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-line me-2"></i>Score Distribution
+                </h5>
+                <div class="mt-3">
+                    {% set excellent = distribution['excellent'] %}
+                    {% set good = distribution['good'] %}
+                    {% set fair = distribution['fair'] %}
+                    {% set poor = distribution['poor'] %}
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-success me-2">Excellent (90%+)</span>
+                        <span class="float-end">{{ excellent }} students</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-2">Good (70-89%)</span>
+                        <span class="float-end">{{ good }} students</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-warning me-2">Fair (50-69%)</span>
+                        <span class="float-end">{{ fair }} students</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-danger me-2">Poor (<50%)</span>
+                        <span class="float-end">{{ poor }} students</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Results Table -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-table me-2"></i>Detailed Results
+                </h5>
+                
+                {% if exam_sessions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Domain</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in exam_sessions|sort(attribute='end_time', reverse=true) %}
+                                <tr>
+                                    <td>
+                                        <strong>Student #{{ session.user_id }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if session.domain == 'web_dev' %}bg-primary
+                                            {% elif session.domain == 'ml' %}bg-success
+                                            {% else %}bg-info{% endif %}">
+                                            {{ session.domain.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ session.score }}/{{ session.total_questions }}</strong>
+                                    </td>
+                                    <td>
+                                        {% set tq = session.total_questions or 0 %}
+                                        {% if tq > 0 %}
+                                            {% set percentage = (session.score / tq) * 100 %}
+                                        {% else %}
+                                            {% set percentage = 0 %}
+                                        {% endif %}
+                                        <span class="badge 
+                                            {% if percentage >= 90 %}bg-success
+                                            {% elif percentage >= 80 %}bg-info
+                                            {% elif percentage >= 70 %}bg-warning
+                                            {% elif percentage >= 60 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ "%.1f"|format(percentage) }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ session.start_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ session.end_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        {% set duration = session.end_time - session.start_time %}
+                                        <small>{{ (duration.total_seconds() / 60)|round(1) }} min</small>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_view_session', session_id=session.id) }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-success" href="{{ url_for('export_session_csv', session_id=session.id) }}">
+                                            <i class="fas fa-download"></i> Export
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No exam results found</h5>
+                        <p class="text-muted">Students need to complete exams to see results here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if exam and students %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-redo me-2"></i>Grant Retake Permission</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Email</th>
+                                <th>Remaining Attempts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td>{{ s.username if s else 'Student #' ~ loop.index }}</td>
+                                <td>{{ s.email if s else '' }}</td>
+                                <td>
+                                    {% set perm = retake_map.get(s.id) if s else None %}
+                                    <span class="badge {{ 'bg-success' if perm and perm.remaining_attempts>0 else 'bg-secondary' }}">
+                                        {{ perm.remaining_attempts if perm else 0 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin_grant_retake', exam_id=exam.id) }}" class="d-flex align-items-center gap-2">
+                                        <input type="hidden" name="user_id" value="{{ s.id }}" />
+                                        <input type="number" min="0" class="form-control form-control-sm" name="attempts" value="{{ perm.remaining_attempts if perm else 1 }}" style="width:100px" />
+                                        <button class="btn btn-sm btn-primary">
+                                            <i class="fas fa-save me-1"></i>Save
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Export Options -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-download me-2"></i>Export Options
+                </h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-primary w-100" onclick="window.location.href='{{ url_for('export_all_csv') }}'">
+                            <i class="fas fa-file-excel me-2"></i>Export All Results (CSV)
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-success w-100" onclick="exportDomainResults('web_dev')">
+                            <i class="fas fa-code me-2"></i>Web Dev Results
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-info w-100" onclick="exportDomainResults('ml')">
+                            <i class="fas fa-brain me-2"></i>ML Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewDetails(sessionId) {}
+function exportResult(sessionId) {}
+function exportAllResults() {}
+function exportDomainResults(domain) {
+    // This would typically trigger a domain-specific export
+    alert(`Exporting ${domain} results...`);
+}
+
+// Add sorting functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for table headers to enable sorting
+    const tableHeaders = document.querySelectorAll('th');
+    tableHeaders.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+            // Sorting logic would go here
+            console.log('Sorting by:', this.textContent);
+        });
+    });
+});
+</script>
+{% endblock %}

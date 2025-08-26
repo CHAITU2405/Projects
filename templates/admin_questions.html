@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Questions - {{ domain.replace('_', ' ').title() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="card-title">
+                        <i class="fas fa-question-circle me-2"></i>
+                        {{ domain.replace('_', ' ').title() }} Questions
+                    </h2>
+                    <p class="text-muted">Manage questions for {{ domain.replace('_', ' ').title() }} domain</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('add_question') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Question
+                    </a>
+                    <a href="{{ url_for('admin_exams', domain=domain) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-signature me-2"></i>Manage Exams
+                    </a>
+                    <a href="{{ url_for('admin_dashboard_json') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-list me-2"></i>Question List
+                </h5>
+                
+                {% if questions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Question</th>
+                                    <th>Options</th>
+                                    <th>Correct Answer</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in questions %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                        <strong>{{ question.question_text[:100] }}{% if question.question_text|length > 100 %}...{% endif %}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="d-block">
+                                            <span class="badge bg-outline-primary me-1">A: {{ question.option_a[:30] }}{% if question.option_a|length > 30 %}...{% endif %}</span>
+                                        </small>
+                                        <small class="d-block">
+                                            <span class="badge bg-outline-primary me-1">B: {{ question.option_b[:30] }}{% if question.option_b|length > 30 %}...{% endif %}</span>
+                                        </small>
+                                        <small class="d-block">
+                                            <span class="badge bg-outline-primary me-1">C: {{ question.option_c[:30] }}{% if question.option_c|length > 30 %}...{% endif %}</span>
+                                        </small>
+                                        <small class="d-block">
+                                            <span class="badge bg-outline-primary me-1">D: {{ question.option_d[:30] }}{% if question.option_d|length > 30 %}...{% endif %}</span>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ question.correct_answer }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ question.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewQuestion({{ question.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('edit_question', question_id=question.id) }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('delete_question', question_id=question.id) }}" style="display:inline" onsubmit="return confirm('Delete this question?')">
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No questions found</h5>
+                        <p class="text-muted">Start by adding questions for this domain.</p>
+                        <a href="{{ url_for('add_question') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add First Question
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Detail Modal -->
+<div class="modal fade" id="questionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Question Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="questionModalBody">
+                <!-- Question details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewQuestion(questionId) {
+    document.getElementById('questionModalBody').innerHTML = `
+        <div class="text-center py-4">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+            <p>Loading question details...</p>
+        </div>
+    `;
+    const modal = new bootstrap.Modal(document.getElementById('questionModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

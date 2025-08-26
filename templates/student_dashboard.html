@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-user-graduate me-2"></i>Student Dashboard
+                </h2>
+                <p class="text-muted">Welcome back, {{ current_user.username }}! Choose a domain or pick a listed exam.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('confirm_start_exam', domain='web_dev') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-code fa-3x text-primary mb-3"></i>
+                <h4 class="card-title">Web Development</h4>
+                <p class="card-text">Test your knowledge in HTML, CSS, JavaScript, and modern web technologies.</p>
+                <div class="mt-3">
+                    <span class="badge bg-success">Start Exam</span>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>30 minutes
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('confirm_start_exam', domain='ml') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-brain fa-3x text-success mb-3"></i>
+                <h4 class="card-title">Machine Learning</h4>
+                <p class="card-text">Evaluate your understanding of algorithms, statistics, and ML frameworks.</p>
+                <div class="mt-3">
+                    <span class="badge bg-success">Start Exam</span>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>30 minutes
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card domain-card h-100" onclick="window.location.href='{{ url_for('confirm_start_exam', domain='data_science') }}'">
+            <div class="card-body text-center p-4">
+                <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                <h4 class="card-title">Data Science</h4>
+                <p class="card-text">Assess your skills in data analysis, visualization, and statistical methods.</p>
+                <div class="mt-3">
+                    <span class="badge bg-success">Start Exam</span>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>30 minutes
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Visible Exams</h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('student_exams_list') }}">
+                        View All
+                    </a>
+                </div>
+                <div class="row mt-3">
+                    {% for exam in exams[:6] %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title">{{ exam.name }}</h6>
+                                <small class="text-muted">Domain: {{ exam.domain.replace('_', ' ').title() }}</small>
+                                <div class="mt-auto">
+                                    <a href="{{ url_for('confirm_start_exam_by_exam', exam_id=exam.id) }}" class="btn btn-primary btn-sm mt-2">
+                                        Start
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <p class="text-muted mb-0">No exams are visible right now.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Exam Guidelines
+                </h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-warning me-2"></i>
+                        <strong>Time Limit:</strong> 30 minutes per exam
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        <strong>Security:</strong> Tab switching is prevented during exams
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-save text-info me-2"></i>
+                        <strong>Auto-submit:</strong> Exam submits automatically when time expires
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-undo text-secondary me-2"></i>
+                        <strong>No going back:</strong> Once started, you cannot pause or restart
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-trophy me-2"></i>Your Performance
+                </h5>
+                <div class="text-center py-3">
+                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                    <h5>Track Your Progress</h5>
+                    <p class="text-muted">View your exam results and performance analytics</p>
+                    <button class="btn btn-outline-primary" onclick="window.location.href='{{ url_for('student_results_list') }}'">
+                        <i class="fas fa-eye me-2"></i>View Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightbulb me-2"></i>Tips for Success
+                </h5>
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-book fa-2x text-primary mb-2"></i>
+                        <h6>Study Well</h6>
+                        <small class="text-muted">Review the domain materials thoroughly</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h6>Manage Time</h6>
+                        <small class="text-muted">Don't spend too long on one question</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h6>Read Carefully</h6>
+                        <small class="text-muted">Understand the question before answering</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-eye fa-2x text-info mb-2"></i>
+                        <h6>Review Answers</h6>
+                        <small class="text-muted">Double-check your responses if time permits</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewResults() {
+    // This would typically redirect to a results page
+    alert('Results viewing functionality coming soon!');
+}
+
+// Add some interactive effects
+document.addEventListener('DOMContentLoaded', function() {
+    const domainCards = document.querySelectorAll('.domain-card');
+    
+    domainCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

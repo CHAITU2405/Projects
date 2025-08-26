@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}My Results{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title"><i class="fas fa-clipboard-check me-2"></i>My Completed Exams</h3>
+                {% if sessions %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Domain</th>
+                                <th>Score</th>
+                                <th>Completed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sessions %}
+                            <tr>
+                                <td>{{ s.domain.replace('_',' ').title() }}</td>
+                                <td>{{ s.score }}/{{ s.total_questions }} ({{ (s.score / s.total_questions * 100)|round(1) }}%)</td>
+                                <td>{{ s.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('exam_results', session_id=s.id) }}">
+                                        <i class="fas fa-eye"></i> View Answers
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No completed exams yet</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

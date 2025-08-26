@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Set Question Paper - {{ exam.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body d-flex justify-content-between align-items-center">
+				<div>
+					<h2 class="card-title mb-0">
+						<i class="fas fa-clipboard-list me-2"></i>Set Question Paper
+					</h2>
+					<p class="text-muted">Exam: <strong>{{ exam.name }}</strong> • Domain: <strong>{{ exam.domain.replace('_', ' ').title() }}</strong></p>
+				</div>
+				<div>
+					<a href="{{ url_for('admin_exams', domain=exam.domain) }}" class="btn btn-outline-secondary">
+						<i class="fas fa-arrow-left me-2"></i>Back to Exams
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<form method="POST">
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead class="table-light">
+								<tr>
+									<th style="width:60px">Select</th>
+									<th>Question</th>
+									<th>Type</th>
+									<th>Points</th>
+									<th>Created</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for q in questions %}
+								<tr>
+									<td>
+										<input type="checkbox" name="question_ids" value="{{ q.id }}" {{ 'checked' if q.id in selected_map else '' }}>
+									</td>
+									<td>{{ q.question_text[:120] }}{% if q.question_text|length>120 %}...{% endif %}</td>
+									<td><span class="badge bg-secondary">{{ q.question_type }}</span></td>
+									<td><span class="badge bg-info text-dark">{{ q.points }}</span></td>
+									<td><small class="text-muted">{{ q.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+					<div class="mt-3 d-flex gap-2">
+						<button class="btn btn-primary">
+							<i class="fas fa-save me-2"></i>Save Question Paper
+						</button>
+						<a href="{{ url_for('admin_exams', domain=exam.domain) }}" class="btn btn-outline-secondary">Cancel</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+

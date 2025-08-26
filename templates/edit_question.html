@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Question{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title"><i class="fas fa-edit me-2"></i>Edit Question</h3>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Question Text</label>
+                        <textarea class="form-control" name="question_text" rows="4" required>{{ question.question_text }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Question Type</label>
+                            <select class="form-select" id="question_type" name="question_type">
+                                <option value="mcq_single" {% if question.question_type=='mcq_single' %}selected{% endif %}>MCQ (Single)</option>
+                                <option value="mcq_multi" {% if question.question_type=='mcq_multi' %}selected{% endif %}>MCQ (Multi)</option>
+                                <option value="short_text" {% if question.question_type=='short_text' %}selected{% endif %}>Short Text</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Points</label>
+                            <input class="form-control" type="number" step="0.5" name="points" value="{{ question.points or 1 }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Partial Credit</label>
+                            <select class="form-select" name="partial_credit">
+                                <option value="1" {% if question.partial_credit %}selected{% endif %}>Enabled</option>
+                                <option value="0" {% if not question.partial_credit %}selected{% endif %}>Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Option A</label>
+                            <input id="option_a" class="form-control" name="option_a" value="{{ question.option_a }}" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Option B</label>
+                            <input id="option_b" class="form-control" name="option_b" value="{{ question.option_b }}" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Option C</label>
+                            <input id="option_c" class="form-control" name="option_c" value="{{ question.option_c }}" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Option D</label>
+                            <input id="option_d" class="form-control" name="option_d" value="{{ question.option_d }}" />
+                        </div>
+                    </div>
+                    <div class="mb-4" id="correctAnswerContainer">
+                        <label class="form-label">Correct Answer</label>
+                        <select class="form-select" id="correct_answer" name="correct_answer" multiple>
+                            <option value="A" {% if 'A' in (question.correct_answer or '') %}selected{% endif %}>A</option>
+                            <option value="B" {% if 'B' in (question.correct_answer or '') %}selected{% endif %}>B</option>
+                            <option value="C" {% if 'C' in (question.correct_answer or '') %}selected{% endif %}>C</option>
+                            <option value="D" {% if 'D' in (question.correct_answer or '') %}selected{% endif %}>D</option>
+                        </select>
+                        <small class="text-muted">For multi-answer, select multiple options.</small>
+                    </div>
+                    <div class="mb-3" id="shortTextContainer" style="display:none;">
+                        <label class="form-label">Acceptable Text Answer(s)</label>
+                        <textarea class="form-control" name="correct_answer_text" rows="2">{{ question.correct_answer_text or '' }}</textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('admin_questions', domain=question.domain) }}" class="btn btn-outline-secondary me-2">Cancel</a>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-save me-2"></i>Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function updateTypeUI(){
+    const type = document.getElementById('question_type').value;
+    const ca = document.getElementById('correct_answer');
+    const caWrap = document.getElementById('correctAnswerContainer');
+    const shortText = document.getElementById('shortTextContainer');
+    const optionIds = ['option_a','option_b','option_c','option_d'];
+    if (type === 'short_text'){
+        ca.disabled = true; caWrap.style.display='none'; shortText.style.display='block';
+        optionIds.forEach(id=>{ const el=document.getElementById(id); el && (el.disabled=true); });
+    } else {
+        ca.disabled = false; caWrap.style.display='block'; shortText.style.display='none';
+        optionIds.forEach(id=>{ const el=document.getElementById(id); el && (el.disabled=false); });
+    }
+}
+document.getElementById('question_type').addEventListener('change', updateTypeUI);
+document.addEventListener('DOMContentLoaded', updateTypeUI);
+
+// On submit, join selected answers for MCQ
+document.querySelector('form').addEventListener('submit', function(e){
+    const type = document.getElementById('question_type').value;
+    if (type !== 'short_text'){
+        const selected = Array.from(document.getElementById('correct_answer').selectedOptions).map(o=>o.value);
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden'; hidden.name='correct_answer_joined'; hidden.value = selected.join(',');
+        this.appendChild(hidden);
+    }
+});
+</script>
+{% endblock %}

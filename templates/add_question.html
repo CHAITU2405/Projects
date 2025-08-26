@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Add Question - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="card-title">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Question
+                    </h2>
+                    <a href="{{ url_for('admin_dashboard_json') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="domain" class="form-label">Domain *</label>
+                            <select class="form-select" id="domain" name="domain" required>
+                                <option value="">Select Domain</option>
+                                {% for domain in domains %}
+                                    <option value="{{ domain }}">{{ domain.replace('_', ' ').title() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="question_type" class="form-label">Question Type *</label>
+                            <select class="form-select" id="question_type" name="question_type" required>
+                                <option value="mcq_single">MCQ (Single Answer)</option>
+                                <option value="mcq_multi">MCQ (Multiple Answers)</option>
+                                <option value="short_text">Short Text Answer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Points</label>
+                            <input type="number" step="0.5" min="0" class="form-control" name="points" value="1">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Partial Credit</label>
+                            <select class="form-select" name="partial_credit">
+                                <option value="1" selected>Enabled</option>
+                                <option value="0">Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="question_text" class="form-label">Question Text *</label>
+                        <textarea class="form-control" id="question_text" name="question_text" rows="4" 
+                                  placeholder="Enter your question here..." required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="option_a" class="form-label">Option A *</label>
+                            <input type="text" class="form-control" id="option_a" name="option_a" 
+                                   placeholder="Enter option A" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="option_b" class="form-label">Option B *</label>
+                            <input type="text" class="form-control" id="option_b" name="option_b" 
+                                   placeholder="Enter option B" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="option_c" class="form-label">Option C *</label>
+                            <input type="text" class="form-control" id="option_c" name="option_c" 
+                                   placeholder="Enter option C" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="option_d" class="form-label">Option D *</label>
+                            <input type="text" class="form-control" id="option_d" name="option_d" 
+                                   placeholder="Enter option D" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="correctAnswerContainer">
+                        <label for="correct_answer" class="form-label">Correct Answer *</label>
+                        <select class="form-select" id="correct_answer" name="correct_answer" required multiple>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                        <small class="text-muted">For multi-answer, select multiple options. For single, select one.</small>
+                    </div>
+                    <div class="mb-3" id="shortTextContainer" style="display:none;">
+                        <label class="form-label">Acceptable Text Answer(s)</label>
+                        <textarea class="form-control" name="correct_answer_text" rows="2" placeholder="Comma-separated acceptable answers, case-insensitive"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="reset" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Question Guidelines
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Best Practices:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Keep questions clear and concise</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ensure all options are plausible</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Use consistent formatting</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Domain Examples:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-code text-primary me-2"></i>Web Dev: HTML, CSS, JavaScript</li>
+                            <li><i class="fas fa-brain text-success me-2"></i>ML: Algorithms, Statistics</li>
+                            <li><i class="fas fa-chart-line text-info me-2"></i>Data Science: Analysis, Visualization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle correct answer UI based on question type
+function updateTypeUI() {
+    const type = document.getElementById('question_type').value;
+    const ca = document.getElementById('correct_answer');
+    const caWrap = document.getElementById('correctAnswerContainer');
+    const shortText = document.getElementById('shortTextContainer');
+    const optionIds = ['option_a','option_b','option_c','option_d'];
+    if (type === 'short_text') {
+        ca.disabled = true;
+        ca.required = false;
+        caWrap.style.display = 'none';
+        shortText.style.display = 'block';
+        optionIds.forEach(id => {
+            const el = document.getElementById(id);
+            el.required = false;
+            el.disabled = true;
+        });
+    } else {
+        ca.disabled = false;
+        ca.required = true;
+        caWrap.style.display = 'block';
+        shortText.style.display = 'none';
+        optionIds.forEach(id => {
+            const el = document.getElementById(id);
+            el.disabled = false;
+            el.required = true;
+        });
+    }
+}
+
+document.getElementById('question_type').addEventListener('change', updateTypeUI);
+document.addEventListener('DOMContentLoaded', updateTypeUI);
+
+// Overwrite form submission to join multiple correct answers
+const formEl = document.querySelector('form');
+formEl.addEventListener('submit', function(e){
+    const type = document.getElementById('question_type').value;
+    if (type !== 'short_text') {
+        const selected = Array.from(document.getElementById('correct_answer').selectedOptions).map(o=>o.value);
+        if (selected.length === 0) {
+            e.preventDefault();
+            alert('Select at least one correct option');
+            return;
+        }
+        // inject a hidden field with joined answers
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'correct_answer_joined';
+        hidden.value = selected.join(',');
+        formEl.appendChild(hidden);
+    } else {
+        const textAns = document.querySelector('[name="correct_answer_text"]').value.trim();
+        if (!textAns) {
+            e.preventDefault();
+            alert('Please enter at least one acceptable text answer.');
+            return;
+        }
+    }
+});
+
+// Auto-select domain if coming from specific domain page
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const domain = urlParams.get('domain');
+    if (domain) {
+        document.getElementById('domain').value = domain;
+    }
+});
+
+// Form validation (domain/options)
+document.querySelector('form').addEventListener('submit', function(e) {
+    const domain = document.getElementById('domain').value;
+    const questionText = document.getElementById('question_text').value.trim();
+    const type = document.getElementById('question_type').value;
+    if (!domain || !questionText) {
+        e.preventDefault();
+        alert('Please fill in domain and question text.');
+        return;
+    }
+    if (type !== 'short_text') {
+        const requiredOptions = ['option_a','option_b','option_c','option_d'];
+        for (let id of requiredOptions) {
+            const val = document.getElementById(id).value.trim();
+            if (!val) {
+                e.preventDefault();
+                alert('Please fill in all option fields.');
+                return;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

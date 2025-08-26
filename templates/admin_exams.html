@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Exams - {{ domain.replace('_', ' ').title() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body d-flex justify-content-between align-items-center">
+				<div>
+					<h2 class="card-title">
+						<i class="fas fa-file-signature me-2"></i>
+						{{ domain.replace('_', ' ').title() }} Exams
+					</h2>
+					<p class="text-muted mb-0">Create exams, toggle visibility, and set question papers</p>
+				</div>
+				<div>
+					<a href="{{ url_for('create_exam') }}" class="btn btn-primary">
+						<i class="fas fa-plus me-2"></i>Create Exam
+					</a>
+					<a href="{{ url_for('admin_dashboard_json') }}" class="btn btn-outline-secondary">
+						<i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-list me-2"></i>Exam List
+				</h5>
+				{% if exams %}
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead class="table-light">
+							<tr>
+								<th>#</th>
+								<th>Name</th>
+								<th>Visibility</th>
+								<th>Created</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for exam in exams %}
+							<tr>
+								<td>{{ loop.index }}</td>
+								<td><strong>{{ exam.name }}</strong></td>
+								<td>
+									<form method="POST" action="{{ url_for('toggle_exam_visibility', exam_id=exam.id) }}" style="display:inline">
+										<button class="btn btn-sm {{ 'btn-success' if exam.is_visible else 'btn-outline-secondary' }}">
+											<i class="fas {{ 'fa-toggle-on' if exam.is_visible else 'fa-toggle-off' }} me-1"></i>
+											{{ 'Visible to Students' if exam.is_visible else 'Hidden' }}
+										</button>
+									</form>
+								</td>
+								<td><small class="text-muted">{{ exam.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+								<td>
+									<a class="btn btn-sm btn-outline-primary" href="{{ url_for('set_question_paper', exam_id=exam.id) }}">
+										<i class="fas fa-clipboard-list me-1"></i>Set Question Paper
+									</a>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<div class="text-center py-5">
+					<i class="fas fa-file-signature fa-3x text-muted mb-3"></i>
+					<h5 class="text-muted">No exams found for this domain</h5>
+					<p class="text-muted">Create an exam to get started.</p>
+					<a href="{{ url_for('create_exam') }}" class="btn btn-primary">
+						<i class="fas fa-plus me-2"></i>Create First Exam
+					</a>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+

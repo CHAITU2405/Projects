@@ -1,0 +1,778 @@
+{% extends "base.html" %}
+
+{% block title %}Taking Exam - {{ exam_session.domain.replace('_', ' ').title() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exam-container {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .timer-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .timer {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #dc3545;
+        text-align: center;
+    }
+    
+    .question-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border: none;
+    }
+    
+    .question-number {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
+    .option-item {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .option-item:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .option-item.selected {
+        border-color: #667eea;
+        background-color: #667eea;
+        color: white;
+    }
+    
+    .option-item input[type="radio"] {
+        margin-right: 10px;
+    }
+    
+    .exam-header {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .submit-btn {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 25px;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+    }
+    
+    .warning-banner {
+        background: linear-gradient(45deg, #ffc107, #fd7e14);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .fullscreen-warning {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(220, 53, 69, 0.95);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-size: 2rem;
+        text-align: center;
+    }
+    .fullscreen-prompt {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.98);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        text-align: center;
+        padding: 20px;
+        backdrop-filter: blur(18px);
+    }
+    .exam-container.blurred {
+        filter: blur(16px);
+        pointer-events: none;
+    }
+    .blur-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9998; /* keep below fullscreen prompt */
+        text-align: center;
+        padding: 20px;
+        pointer-events: none; /* do not block clicks on prompt */
+    }
+    .watermark {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9996;
+        opacity: 0.18;
+        background-repeat: repeat;
+        background-size: 420px 200px;
+    }
+    /* Disable text selection site-wide inside exam to reduce copying */
+    .exam-container, .exam-container * {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -ms-user-select: none;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    /* Allow caret/selection in inputs if needed */
+    input, textarea {
+        -webkit-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+    /* Block printing */
+    @media print {
+        body { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exam-container">
+    <div class="blur-overlay" id="blurOverlay">
+        <div>
+            <i class="fas fa-ban fa-3x mb-3"></i>
+            <h3>Exam content temporarily blurred</h3>
+            <p class="mb-0">Screenshots and leaving the tab are not allowed.</p>
+        </div>
+    </div>
+    <div class="watermark" id="watermark"></div>
+    <!-- Timer Container -->
+    <div class="timer-container">
+        <div class="text-center mb-2">
+            <i class="fas fa-clock text-warning"></i>
+            <small class="d-block">Time Remaining</small>
+        </div>
+        <div class="timer" id="timer">30:00</div>
+        <div class="text-center mt-2">
+            <small class="text-muted">Auto-submit in</small>
+        </div>
+    </div>
+    
+    <!-- Fullscreen Warning -->
+    <div class="fullscreen-warning" id="fullscreenWarning">
+        <div>
+            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+            <h3>Warning!</h3>
+            <p>Please return to the exam tab immediately.</p>
+            <p>Tab switching is not allowed during exams.</p>
+        </div>
+    </div>
+    <!-- Fullscreen Prompt (initial and re-entry) -->
+    <div class="fullscreen-prompt" id="fullscreenPrompt">
+        <div>
+            <i class="fas fa-expand fa-3x mb-3"></i>
+            <h3>Please enter fullscreen to continue the exam</h3>
+            <p class="mb-4">Click the button below to enter fullscreen mode.</p>
+            <button class="btn btn-primary" id="enterFullscreenBtn">
+                <i class="fas fa-expand me-2"></i>Enter Fullscreen
+            </button>
+            <div class="mt-4 small text-muted">
+                Screenshots and screen recording are not allowed during the exam.
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Exam Header -->
+        <div class="exam-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-2">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ exam_session.domain.replace('_', ' ').title() }} Exam
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-user me-2"></i>{{ current_user.username }} | 
+                        <i class="fas fa-calendar me-2"></i>{{ exam_session.start_time.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-primary fs-6">{{ questions|length }} Questions</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Warning Banner -->
+        <div class="warning-banner">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Important:</strong> Do not switch tabs or leave this page during the exam. 
+            The exam will automatically submit when time expires.
+        </div>
+        
+        <!-- Questions Form -->
+        <form id="examForm" method="POST" action="{{ url_for('submit_exam_route', session_id=exam_session.id) }}">
+            {% for question in questions %}
+            <div class="card question-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="question-number">{{ loop.index }}</div>
+                        <div class="flex-grow-1">
+                            <h5 class="card-title">{{ question.question_text }}</h5>
+                        </div>
+                    </div>
+                    
+                    <div class="options-container">
+                        {% if question.question_type == 'short_text' %}
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="question_{{ question.id }}" placeholder="Type your answer here" required>
+                        </div>
+                        {% elif question.question_type == 'mcq_multi' %}
+                        <div class="option-item" onclick="toggleCheckbox(this)">
+                            <input type="checkbox" name="question_{{ question.id }}" value="A" id="q{{ question.id }}_a">
+                            <label for="q{{ question.id }}_a" class="mb-0">
+                                <strong>A.</strong> {{ question.option_a }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="toggleCheckbox(this)">
+                            <input type="checkbox" name="question_{{ question.id }}" value="B" id="q{{ question.id }}_b">
+                            <label for="q{{ question.id }}_b" class="mb-0">
+                                <strong>B.</strong> {{ question.option_b }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="toggleCheckbox(this)">
+                            <input type="checkbox" name="question_{{ question.id }}" value="C" id="q{{ question.id }}_c">
+                            <label for="q{{ question.id }}_c" class="mb-0">
+                                <strong>C.</strong> {{ question.option_c }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="toggleCheckbox(this)">
+                            <input type="checkbox" name="question_{{ question.id }}" value="D" id="q{{ question.id }}_d">
+                            <label for="q{{ question.id }}_d" class="mb-0">
+                                <strong>D.</strong> {{ question.option_d }}
+                            </label>
+                        </div>
+                        {% else %}
+                        <div class="option-item" onclick="selectOption(this, '{{ question.id }}', 'A')">
+                            <input type="radio" name="question_{{ question.id }}" value="A" id="q{{ question.id }}_a" required>
+                            <label for="q{{ question.id }}_a" class="mb-0">
+                                <strong>A.</strong> {{ question.option_a }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="selectOption(this, '{{ question.id }}', 'B')">
+                            <input type="radio" name="question_{{ question.id }}" value="B" id="q{{ question.id }}_b" required>
+                            <label for="q{{ question.id }}_b" class="mb-0">
+                                <strong>B.</strong> {{ question.option_b }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="selectOption(this, '{{ question.id }}', 'C')">
+                            <input type="radio" name="question_{{ question.id }}" value="C" id="q{{ question.id }}_c" required>
+                            <label for="q{{ question.id }}_c" class="mb-0">
+                                <strong>C.</strong> {{ question.option_c }}
+                            </label>
+                        </div>
+                        <div class="option-item" onclick="selectOption(this, '{{ question.id }}', 'D')">
+                            <input type="radio" name="question_{{ question.id }}" value="D" id="q{{ question.id }}_d" required>
+                            <label for="q{{ question.id }}_d" class="mb-0">
+                                <strong>D.</strong> {{ question.option_d }}
+                            </label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Submit Button -->
+            <div class="text-center mt-4 mb-5">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Exam
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let timeRemaining = 1800; // 30 minutes in seconds
+let timerInterval;
+let tabSwitchCount = 0;
+let isTabActive = true;
+let fullscreenExitCount = 0;
+let autoSubmitting = false;
+let hasSubmitted = false;
+let splitViewCount = 0;
+let isSubmitting = false;
+let enteredFullscreenAt = 0;
+const splitCheckGraceMs = 2500;
+let lastSplitTriggerMs = 0;
+let hasEnteredFullscreen = false;
+
+// Timer functionality
+function updateTimer() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    document.getElementById('timer').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('examForm').submit();
+        return;
+    }
+    
+    // Change color when time is running low
+    if (timeRemaining <= 300) { // 5 minutes
+        document.getElementById('timer').style.color = '#dc3545';
+        document.getElementById('timer').style.animation = 'pulse 1s infinite';
+    }
+    
+    timeRemaining--;
+}
+
+// Start timer
+timerInterval = setInterval(updateTimer, 1000);
+
+// Fullscreen helpers
+function isFullscreen() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+}
+
+function requestFullscreen(el) {
+    if (el.requestFullscreen) return el.requestFullscreen();
+    if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    if (el.msRequestFullscreen) return el.msRequestFullscreen();
+}
+
+function exitFullscreen() {
+    if (document.exitFullscreen) return document.exitFullscreen();
+    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    if (document.msExitFullscreen) return document.msExitFullscreen();
+}
+
+function showFullscreenPrompt() {
+    document.getElementById('fullscreenPrompt').style.display = 'flex';
+}
+
+function hideFullscreenPrompt() {
+    document.getElementById('fullscreenPrompt').style.display = 'none';
+}
+
+// Force fullscreen on load
+document.addEventListener('DOMContentLoaded', function() {
+    // Show prompt but do NOT blur the exam until user interacts
+    showFullscreenPrompt();
+    blurExam(false);
+});
+
+document.getElementById('enterFullscreenBtn').addEventListener('click', function() {
+    // Some browsers require user gesture: call and then hide if granted
+    const p = requestFullscreen(document.documentElement);
+    if (p && p.then) {
+        p.then(() => {
+            hideFullscreenPrompt();
+            blurExam(false);
+        }).catch(() => {
+            // keep prompt visible on failure, do not blur exam
+            showFullscreenPrompt();
+        });
+    } else {
+        // if promise is not returned, hide prompt after small delay
+        setTimeout(() => { hideFullscreenPrompt(); blurExam(false); }, 100);
+    }
+});
+
+// Attempt to detect screen capture APIs and keep content blurred when prompt is open
+// Remove aggressive periodic blur to avoid blocking interactions
+
+// Tab switching prevention
+document.addEventListener('visibilitychange', function() {
+    if (isSubmitting || autoSubmitting) return;
+    if (document.hidden) {
+        isTabActive = false;
+        tabSwitchCount++;
+        showFullscreenWarning();
+        
+        // Log tab switching attempt
+        console.log(`Tab switch attempt #${tabSwitchCount} detected`);
+        
+        // Auto-submit at 3rd tab switch
+        if (tabSwitchCount >= 3 && !hasSubmitted) {
+            autoSubmitting = true;
+            hasSubmitted = true;
+            document.getElementById('examForm').submit();
+        }
+        // blur briefly on tab hide
+        blurExam(true);
+        setTimeout(()=> blurExam(false), 1500);
+    } else {
+        isTabActive = true;
+        hideFullscreenWarning();
+    }
+});
+
+// Window focus/blur events
+window.addEventListener('blur', function() {
+    if (!isTabActive) {
+        showFullscreenWarning();
+    }
+});
+
+window.addEventListener('focus', function() {
+    hideFullscreenWarning();
+});
+
+// Fullscreen change handling
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    if (isSubmitting) return;
+    if (!isFullscreen()) {
+        fullscreenExitCount += 1;
+        if (fullscreenExitCount <= 2) {
+            alert(`Warning ${fullscreenExitCount}/2: Please stay in fullscreen during the exam.`);
+            showFullscreenPrompt();
+            // keep content readable so user can click prompt
+            blurExam(false);
+        } else if (!hasSubmitted) {
+            // Auto-submit at the 3rd exit
+            autoSubmitting = true;
+            hasSubmitted = true;
+            document.getElementById('examForm').submit();
+        }
+    } else {
+        hasEnteredFullscreen = true;
+        enteredFullscreenAt = Date.now();
+        splitViewCount = 0;
+        hideFullscreenPrompt();
+        blurExam(false);
+    }
+}
+
+// Prevent right-click context menu
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+// Prevent keyboard shortcuts
+function isScreenshotCombo(e){
+    const key = e.key || '';
+    const code = e.code || '';
+    const keyLower = (key && key.toLowerCase) ? key.toLowerCase() : '';
+    const isPrint = key === 'PrintScreen' || code === 'PrintScreen' || e.keyCode === 44;
+    const isMacShot = e.metaKey && e.shiftKey && (key === '3' || key === '4' || key === '5');
+    const isWinSnip = (e.metaKey || e.ctrlKey) && e.shiftKey && keyLower === 's';
+    return isPrint || isMacShot || isWinSnip;
+}
+
+function showNotice(msg){
+    let el = document.getElementById('examNotice');
+    if (!el){
+        el = document.createElement('div');
+        el.id = 'examNotice';
+        el.style.position = 'fixed';
+        el.style.top = '20px';
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.background = 'rgba(0,0,0,0.8)';
+        el.style.color = '#fff';
+        el.style.padding = '10px 16px';
+        el.style.borderRadius = '8px';
+        el.style.zIndex = '10003';
+        el.style.fontSize = '14px';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(()=>{ el.style.display = 'none'; }, 2000);
+}
+
+document.addEventListener('keydown', function(e) {
+    // Prevent Ctrl+Tab, Alt+Tab, F5, Ctrl+R, etc.
+    if ((e.ctrlKey && e.key === 'Tab') || 
+        (e.altKey && e.key === 'Tab') || 
+        e.key === 'F5' || 
+        (e.ctrlKey && e.key === 'r') ||
+        (e.ctrlKey && e.key === 'R') ||
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C')) || // copy
+        (e.ctrlKey && (e.key === 'x' || e.key === 'X')) || // cut
+        (e.ctrlKey && (e.key === 'v' || e.key === 'V')) || // paste
+        (e.ctrlKey && (e.key === 'p' || e.key === 'P')) || // print
+        isScreenshotCombo(e)) { // screenshot/snipping
+        e.preventDefault();
+        blurExam(true);
+        showNotice('Screenshots are disabled during the exam.');
+        return false;
+    }
+}, true);
+
+// Mobile screenshot detection attempts (Android): listen for volume down + power heuristic
+document.addEventListener('volumechange', function(e){
+    blurExam(true);
+    showNotice('Screenshots are disabled during the exam.');
+    setTimeout(()=> blurExam(false), 1500);
+}, true);
+
+// Add dynamic watermark with user info/time to deter mobile screenshots
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const wm = document.getElementById('watermark');
+        const now = new Date();
+        const stamp = `${now.toISOString()} - {{ current_user.username if current_user.is_authenticated else 'student' }}`;
+        const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='420' height='200'>
+            <text x='10' y='40' fill='rgba(0,0,0,0.25)' font-size='16' font-family='Arial'>${stamp}</text>
+            <text x='10' y='120' fill='rgba(0,0,0,0.25)' font-size='16' font-family='Arial'>Exam ID: {{ exam_session.id }}</text>
+        </svg>`);
+        wm.style.backgroundImage = `url("data:image/svg+xml,${svg}")`;
+    } catch(err) {}
+});
+
+// Attempt to block paste events globally except for specific fields (none in MCQs)
+document.addEventListener('paste', function(e){
+    // If you had a text-answer field you wanted to allow, whitelist by id/class here
+    e.preventDefault();
+    return false;
+}, true);
+
+// Attempt to deter screenshots: clear clipboard on PrintScreen
+document.addEventListener('keyup', function(e){
+    if (isScreenshotCombo(e)) {
+        // Best-effort: overwrite clipboard and show non-blocking notice
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('Screenshots are disabled during the exam.').catch(()=>{});
+        }
+        showNotice('Screenshots are disabled during the exam.');
+        blurExam(true);
+        setTimeout(()=> blurExam(false), 2000);
+    }
+}, true);
+
+function blurExam(enable){
+    const container = document.querySelector('.exam-container');
+    const overlay = document.getElementById('blurOverlay');
+    if (!container || !overlay) return;
+    if (enable){
+        container.classList.add('blurred');
+        overlay.style.display = 'flex';
+    } else {
+        container.classList.remove('blurred');
+        overlay.style.display = 'none';
+    }
+}
+
+// Split-screen / viewport integrity checks
+function isViewportFullEnough(){
+    try {
+        if (isFullscreen()) return true; // trust fullscreen as full view
+        const vw = (window.visualViewport && window.visualViewport.width) ? window.visualViewport.width : window.innerWidth;
+        const vh = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+        const sw = screen.width || vw;
+        const sh = screen.height || vh;
+        const areaRatio = (vw * vh) / (sw * sh);
+        // Tolerant threshold to avoid false positives due to browser UI and address bars
+        return (areaRatio > 0.85);
+    } catch(err) { return true; }
+}
+
+function handleViewportIntegrity(){
+    if (isSubmitting || autoSubmitting) return;
+    if (!hasEnteredFullscreen) return;
+    const now = Date.now();
+    if (now - enteredFullscreenAt < splitCheckGraceMs) return; // grace after entering fullscreen
+    if (!isViewportFullEnough()){
+        if (now - lastSplitTriggerMs > 2000) {
+            splitViewCount += 1;
+            lastSplitTriggerMs = now;
+        }
+        showNotice('Split screen or window resize detected. Please return to full screen.');
+        showFullscreenPrompt();
+        if (!autoSubmitting) blurExam(true);
+        if (splitViewCount >= 3 && !hasSubmitted){
+            autoSubmitting = true;
+            hasSubmitted = true;
+            document.getElementById('examForm').submit();
+            return;
+        }
+        setTimeout(()=> blurExam(false), 1500);
+    }
+}
+
+window.addEventListener('resize', handleViewportIntegrity);
+window.addEventListener('orientationchange', handleViewportIntegrity);
+if (window.visualViewport){
+    window.visualViewport.addEventListener('resize', handleViewportIntegrity);
+}
+setInterval(handleViewportIntegrity, 2000);
+
+// Prevent leaving the page
+window.addEventListener('beforeunload', function(e) {
+    if (timeRemaining > 0 && !autoSubmitting && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your exam progress will be lost.';
+        return e.returnValue;
+    }
+});
+
+// Option selection
+function selectOption(element, questionId, option) {
+    // Remove selection from other options in the same question
+    const questionCard = element.closest('.question-card');
+    questionCard.querySelectorAll('.option-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Select the clicked option
+    element.classList.add('selected');
+    
+    // Check the radio button
+    const radio = element.querySelector('input[type="radio"]');
+    radio.checked = true;
+}
+
+// Option selection for checkboxes
+function toggleCheckbox(element){
+    element.classList.toggle('selected');
+    const cb = element.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+}
+
+// Show fullscreen warning
+function showFullscreenWarning() {
+    document.getElementById('fullscreenWarning').style.display = 'flex';
+}
+
+// Hide fullscreen warning
+function hideFullscreenWarning() {
+    document.getElementById('fullscreenWarning').style.display = 'none';
+}
+
+// Form submission confirmation
+document.getElementById('examForm').addEventListener('submit', function(e) {
+    if (autoSubmitting) {
+        return; // skip confirmation for auto-submit
+    }
+    if (timeRemaining > 0) {
+        const confirmed = confirm('Are you sure you want to submit your exam? This action cannot be undone.');
+        if (!confirmed) {
+            e.preventDefault();
+            isSubmitting = false;
+            return false;
+        }
+        isSubmitting = true;
+    }
+});
+
+// Validate multi and text inputs have values
+document.getElementById('examForm').addEventListener('submit', function(e){
+    if (autoSubmitting) {
+        return; // allow blanks on auto-submit
+    }
+    const cards = document.querySelectorAll('.question-card');
+    for (const card of cards){
+        const hasRadio = card.querySelector('input[type="radio"]');
+        const hasCheckbox = card.querySelectorAll('input[type="checkbox"]').length>0;
+        const hasText = card.querySelector('input[type="text"]');
+        if (hasRadio){
+            // required attribute covers this
+            continue;
+        }
+        if (hasCheckbox){
+            if (card.querySelectorAll('input[type="checkbox"]:checked').length === 0){
+                e.preventDefault();
+                alert('Please select at least one option for a multi-answer question.');
+                card.scrollIntoView({behavior:'smooth'});
+                isSubmitting = false;
+                return false;
+            }
+        }
+        if (hasText){
+            if (!hasText.value.trim()){
+                e.preventDefault();
+                alert('Please enter an answer for the text question.');
+                hasText.focus();
+                isSubmitting = false;
+                return false;
+            }
+        }
+    }
+});
+
+// Auto-submit when time expires
+setTimeout(function() {
+    if (timeRemaining <= 0) {
+        document.getElementById('examForm').submit();
+    }
+}, 1800000); // 30 minutes
+
+// Add CSS animation for timer pulse
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

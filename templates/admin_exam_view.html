@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Session {{ exam_session.id }} - {{ exam_session.domain.replace('_',' ').title() }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-user-graduate me-2"></i>{{ student_username }}
+                    </h4>
+                    <small class="text-muted">Session #{{ exam_session.id }} • {{ exam_session.domain.replace('_',' ').title() }}</small>
+                </div>
+                <a href="{{ url_for('admin_results') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Results
+                </a>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h5 class="text-primary mb-0">{{ exam_session.score }}</h5>
+                        <small class="text-muted">Correct</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-info mb-0">{{ exam_session.total_questions }}</h5>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-success mb-0">{{ (exam_session.score / exam_session.total_questions * 100)|round(1) }}%</h5>
+                        <small class="text-muted">Score</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-warning mb-0">{{ exam_session.end_time.strftime('%Y-%m-%d %H:%M') }}</h5>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-list me-2"></i>Answers</h5>
+                {% for response in responses %}
+                    {% set question = questions|selectattr('id','equalto', response.question_id)|first %}
+                    <div class="card mb-3 {% if response.is_correct %}border-success{% else %}border-danger{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">Question {{ loop.index }}</h6>
+                                <span class="badge {% if response.is_correct %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if response.is_correct %}Correct{% else %}Incorrect{% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-2">{{ question.question_text }}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Student Answer</h6>
+                                    <div class="p-2 rounded {% if response.is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                        {% if question.question_type == 'short_text' %}
+                                            <strong>{{ response.user_answer }}</strong>
+                                        {% else %}
+                                            <strong>{{ response.user_answer }}.</strong>
+                                            {% if response.user_answer == 'A' %}{{ question.option_a }}
+                                            {% elif response.user_answer == 'B' %}{{ question.option_b }}
+                                            {% elif response.user_answer == 'C' %}{{ question.option_c }}
+                                            {% elif response.user_answer == 'D' %}{{ question.option_d }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Correct Answer</h6>
+                                    <div class="p-2 rounded bg-success text-white">
+                                        {% if question.question_type == 'short_text' %}
+                                            <strong>{{ (question.correct_answer_text or '') }}</strong>
+                                        {% else %}
+                                            <strong>{{ question.correct_answer }}.</strong>
+                                            {% if question.correct_answer == 'A' %}{{ question.option_a }}
+                                            {% elif question.correct_answer == 'B' %}{{ question.option_b }}
+                                            {% elif question.correct_answer == 'C' %}{{ question.option_c }}
+                                            {% elif question.correct_answer == 'D' %}{{ question.option_d }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted"><i class="fas fa-clock me-1"></i>Answered {{ response.answered_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
