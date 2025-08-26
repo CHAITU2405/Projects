@@ -1,0 +1,16 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Virtual Environment
+/Include
+/Lib
+/Scripts
+/pyvenv.cfg
+/var/app-instance/exam.db
+/exam.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+

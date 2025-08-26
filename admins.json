@@ -1,0 +1,29 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@exam.com",
+    "password": "admin123",
+    "role": "admin",
+    "domain": "all",
+    "created_at": "2025-08-25T07:37:50.450111"
+  },
+  {
+    "username": "Manohar",
+    "email": "manohar@gmail.com",
+    "password": "1234",
+    "role": "admin",
+    "domain": [
+      "ml",
+      "data_science"
+    ],
+    "created_at": "2025-08-25T08:02:52.585352"
+  },
+  {
+    "username": "Chaitu",
+    "email": "patibhanuchaitanya@gmail.com",
+    "password": "1234",
+    "role": "admin",
+    "domain": "web_dev",
+    "created_at": "2025-08-25T08:03:19.280361"
+  }
+]
